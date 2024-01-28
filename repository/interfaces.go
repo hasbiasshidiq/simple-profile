@@ -11,4 +11,5 @@ type RepositoryInterface interface {
 	GetProfileByID(id int) (profile Profile, err error)
 	CreateProfile(input Profile) (createdID int, err error)
 	UpdateProfileByID(profile Profile) (err error)
+	UpsertProfileMetaData(input ProfileMetaData) (createdID int, err error)
 }

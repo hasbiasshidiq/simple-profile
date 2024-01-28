@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func (r *Repository) CreateProfile(input Profile) (createdID int, err error) {
@@ -146,4 +147,38 @@ func (r *Repository) UpdateProfileByID(profile Profile) (err error) {
 
 	// No fields to update
 	return nil
+}
+
+func (r *Repository) UpsertProfileMetaData(input ProfileMetaData) (createdID int, err error) {
+
+	// This method will increment login_attempt by 1
+	// If the corresponding row has not been created yet, it will insert a new row with initial login attempt 1
+	// If the corresponding row has been created, it will update the login attempt
+
+	stmt, err := r.Db.Prepare(
+		`INSERT INTO profile_metadata
+			(
+				profile_id, 
+				login_attempt
+			) VALUES ($1, 1) 
+		ON CONFLICT (profile_id)
+			DO 
+				UPDATE 
+					SET login_attempt = profile_metadata.login_attempt + 1, updated_at = $2
+		RETURNING id`)
+
+	if err != nil {
+		return createdID, err
+	}
+
+	err = stmt.QueryRow(
+		input.ProfileID,
+		time.Now(),
+	).Scan(&createdID)
+
+	if err != nil {
+		return createdID, err
+	}
+
+	return createdID, nil
 }

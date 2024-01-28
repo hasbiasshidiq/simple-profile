@@ -132,6 +132,14 @@ func (s *Server) PostLogin(ctx echo.Context) error {
 		log.Println("error create token : ", err)
 		return err
 	}
+	profileMetadata := repository.ProfileMetaData{ProfileID: existingProfile.ID}
+	_, err = s.Repository.UpsertProfileMetaData(profileMetadata)
+	if err != nil {
+		log.Println("error Upserting MetaData : ", err)
+		responsePayload := generated.GeneralErrorResponse{Message: "Internal Server Error"}
+		return ctx.JSON(http.StatusInternalServerError, responsePayload)
+	}
+
 	resp := generated.LoginResponse{JwtToken: token, UserId: int(existingProfile.ID)}
 
 	return ctx.JSON(http.StatusOK, resp)

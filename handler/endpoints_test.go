@@ -140,6 +140,7 @@ func TestLogin(t *testing.T) {
 		context, rec, mockRepository := setupTestLogin(t, loginSuccess)
 
 		mockRepository.EXPECT().GetProfileByPhoneNumber(gomock.Any()).Return(profile, nil).Times(1)
+		mockRepository.EXPECT().UpsertProfileMetaData(gomock.Any()).Return(0, nil).Times(1)
 		mockServer := &Server{Repository: mockRepository}
 
 		if assert.NoError(t, mockServer.PostLogin(context)) {

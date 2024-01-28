@@ -14,3 +14,11 @@ type Profile struct {
 	UpdatedAt   *time.Time `json:"updated_at"`
 	DeletedAt   *time.Time `json:"deleted_at"`
 }
+
+type ProfileMetaData struct {
+	ID           uint64     `json:"id"`
+	ProfileID    uint64     `json:"profile_id"`
+	LoginAttempt uint64     `json:"login_attempt"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    *time.Time `json:"updated_at"`
+}

@@ -121,3 +121,18 @@ func (mr *MockRepositoryInterfaceMockRecorder) UpdateProfileByID(profile interfa
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProfileByID", reflect.TypeOf((*MockRepositoryInterface)(nil).UpdateProfileByID), profile)
 }
+
+// UpsertProfileMetaData mocks base method.
+func (m *MockRepositoryInterface) UpsertProfileMetaData(input ProfileMetaData) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertProfileMetaData", input)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertProfileMetaData indicates an expected call of UpsertProfileMetaData.
+func (mr *MockRepositoryInterfaceMockRecorder) UpsertProfileMetaData(input interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertProfileMetaData", reflect.TypeOf((*MockRepositoryInterface)(nil).UpsertProfileMetaData), input)
+}
