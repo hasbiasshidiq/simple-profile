@@ -8,10 +8,14 @@
   */
 
 /** This is test table. Remove this table and replace with your own tables. */
-CREATE TABLE test (
-	id serial PRIMARY KEY,
-	name VARCHAR ( 50 ) UNIQUE NOT NULL,
-);
 
-INSERT INTO test (name) VALUES ('test1');
-INSERT INTO test (name) VALUES ('test2');
+CREATE TABLE IF NOT EXISTS profiles (
+    id BIGSERIAL PRIMARY KEY,
+    full_name VARCHAR(60) NOT NULL,
+    country_code VARCHAR(5) NOT NULL DEFAULT '+62',
+    phone_number VARCHAR(20) NOT NULL UNIQUE,
+    password VARCHAR(128) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ,
+    deleted_at TIMESTAMPTZ
+);
