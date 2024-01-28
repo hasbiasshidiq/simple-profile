@@ -55,7 +55,7 @@ func TestCreateProfile(t *testing.T) {
 		mockRepository.EXPECT().GetPhoneNumberExistence(gomock.Any()).Return(false, nil).Times(1)
 		mockServer := &Server{Repository: mockRepository}
 
-		if assert.NoError(t, mockServer.PostRegister(context)) {
+		if assert.NoError(t, mockServer.PostProfile(context)) {
 			assert.Equal(t, http.StatusCreated, rec.Code)
 		}
 	})
@@ -67,7 +67,7 @@ func TestCreateProfile(t *testing.T) {
 		mockRepository.EXPECT().GetPhoneNumberExistence(gomock.Any()).Return(true, nil).Times(1)
 		mockServer := &Server{Repository: mockRepository}
 
-		if assert.NoError(t, mockServer.PostRegister(context)) {
+		if assert.NoError(t, mockServer.PostProfile(context)) {
 			assert.Equal(t, http.StatusConflict, rec.Code)
 		}
 	})
@@ -77,7 +77,7 @@ func TestCreateProfile(t *testing.T) {
 		context, rec, mockRepository := setupTestCreateProfile(t, createProfileInvalidCountryCode)
 		mockServer := &Server{Repository: mockRepository}
 
-		if assert.NoError(t, mockServer.PostRegister(context)) {
+		if assert.NoError(t, mockServer.PostProfile(context)) {
 			assert.Equal(t, http.StatusBadRequest, rec.Code)
 		}
 	})
@@ -87,7 +87,7 @@ func TestCreateProfile(t *testing.T) {
 		context, rec, mockRepository := setupTestCreateProfile(t, createProfileInvalidPasswordPattern)
 		mockServer := &Server{Repository: mockRepository}
 
-		if assert.NoError(t, mockServer.PostRegister(context)) {
+		if assert.NoError(t, mockServer.PostProfile(context)) {
 			assert.Equal(t, http.StatusBadRequest, rec.Code)
 		}
 	})

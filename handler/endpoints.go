@@ -33,9 +33,9 @@ type (
 	}
 )
 
-func (s *Server) PostRegister(ctx echo.Context) error {
+func (s *Server) PostProfile(ctx echo.Context) error {
 
-	var request generated.RegisterRequest
+	var request generated.CreateProfileRequest
 
 	customValidator := validator.New()
 	customValidator.RegisterValidation("indonesiaCountryCodePrefix", validatePhoneWithPrefix)
@@ -84,7 +84,7 @@ func (s *Server) PostRegister(ctx echo.Context) error {
 		return err
 	}
 
-	resp := generated.RegisterResponse{CreatedId: &createdID, Message: "Profile is successfully created"}
+	resp := generated.CreateProfileResponse{CreatedId: &createdID, Message: "Profile is successfully created"}
 
 	return ctx.JSON(http.StatusCreated, resp)
 }

@@ -17,7 +17,7 @@ info:
 servers:
   - url: http://localhost
 paths:
-  /register:
+  /profile:
     post:
       summary: Register a new user
       requestBody:
@@ -25,14 +25,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RegisterRequest"
+              $ref: "#/components/schemas/CreateProfileRequest"
       responses:
         '200':
           description: User registration successful. Returns the ID of the user.
           content:
             application/json:    
               schema:
-                $ref: "#/components/schemas/RegisterResponse"
+                $ref: "#/components/schemas/CreateProfileResponse"
         '400':
           description: Bad Request. Validation failed. Error message contains failed fields and rules.
           content:
@@ -79,7 +79,7 @@ components:
         message:
           type: string
 
-    RegisterRequest:
+    CreateProfileRequest:
       type: object
       required:
         - phone_number
@@ -101,7 +101,7 @@ components:
           maxLength: 64
           pattern: '^(?=.*[A-Z])(?=.*\d)(?=.*\W).*$'
 
-    RegisterResponse:
+    CreateProfileResponse:
       type: object
       required:
         - message
