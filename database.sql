@@ -19,3 +19,12 @@ CREATE TABLE IF NOT EXISTS profiles (
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ
 );
+
+
+CREATE TABLE IF NOT EXISTS profile_metadata (
+    id BIGSERIAL PRIMARY KEY,
+    profile_id INT8 NOT NULL UNIQUE REFERENCES profiles(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    login_attempt INT8 NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ
+);
