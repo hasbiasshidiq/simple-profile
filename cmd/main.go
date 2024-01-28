@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/SawitProRecruitment/UserService/generated"
-	"github.com/SawitProRecruitment/UserService/handler"
-	"github.com/SawitProRecruitment/UserService/repository"
+	"github.com/hasbiasshidiq/simple-profile/generated"
+	"github.com/hasbiasshidiq/simple-profile/handler"
+	"github.com/hasbiasshidiq/simple-profile/repository"
 
 	"github.com/labstack/echo/v4"
 )
@@ -13,9 +13,10 @@ import (
 func main() {
 	e := echo.New()
 
-	var server generated.ServerInterface = newServer()
+	// var server generated.ServerInterface = newServer()
 
-	generated.RegisterHandlers(e, server)
+	generated.RegisterHandlers(e, newServer())
+
 	e.Logger.Fatal(e.Start(":1323"))
 }
 
@@ -24,6 +25,7 @@ func newServer() *handler.Server {
 	var repo repository.RepositoryInterface = repository.NewRepository(repository.NewRepositoryOptions{
 		Dsn: dbDsn,
 	})
+
 	opts := handler.NewServerOptions{
 		Repository: repo,
 	}

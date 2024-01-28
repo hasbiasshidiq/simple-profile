@@ -17,39 +17,68 @@ info:
 servers:
   - url: http://localhost
 paths:
-  /hello:
-    get:
-      summary: This is just a test endpoint to get you started. Please delete this endpoint.
-      operationId: hello
-      parameters:
-        - name: id
-          in: query
-          required: true
-          schema:
-            type: integer
+  /register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: "#/components/schemas/Profile"
       responses:
         '200':
-          description: Test return
+          description: User registration successful. Returns the ID of the user.
           content:
             application/json:    
               schema:
-                $ref: "#/components/schemas/HelloResponse"
-        '404':
-          description: Not found
+                $ref: "#/components/schemas/RegisterResponse"
+        '400':
+          description: Bad Request. Validation failed. Error message contains failed fields and rules.
           content:
-            application/json:
+            application/json:    
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/RegisterErrorResponse"
+        '409':
+          description: Conflict Error. Phone Number Already Exists
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/RegisterErrorResponse"
+
 components:
   schemas:
-    HelloResponse:
+    Profile:
+      type: object
+      required:
+        - phone_number
+        - full_name
+        - password
+      properties:
+        phone_number:
+          type: string
+          minLength: 10
+          maxLength: 13
+          pattern: '^\+62\d{9,12}$'
+        full_name:
+          type: string
+          minLength: 3
+          maxLength: 60
+        password:
+          type: string
+          minLength: 6
+          maxLength: 64
+          pattern: '^(?=.*[A-Z])(?=.*\d)(?=.*\W).*$'
+    RegisterResponse:
       type: object
       required:
         - message
       properties:
         message:
           type: string
-    ErrorResponse:
+        created_id:
+          type: integer
+    RegisterErrorResponse:
       type: object
       required:
         - message
