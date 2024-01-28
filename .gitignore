@@ -30,3 +30,5 @@ build
 generated
 
 main
+
+.DS_Store

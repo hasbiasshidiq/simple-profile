@@ -3,6 +3,7 @@ module github.com/hasbiasshidiq/simple-profile
 go 1.19
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/getkin/kin-openapi v0.117.0
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/golang/mock v1.6.0

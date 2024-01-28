@@ -62,3 +62,18 @@ func (mr *MockRepositoryInterfaceMockRecorder) GetPhoneNumberExistence(phoneNumb
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPhoneNumberExistence", reflect.TypeOf((*MockRepositoryInterface)(nil).GetPhoneNumberExistence), phoneNumber)
 }
+
+// GetProfileByPhoneNumber mocks base method.
+func (m *MockRepositoryInterface) GetProfileByPhoneNumber(phoneNumber string) (Profile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProfileByPhoneNumber", phoneNumber)
+	ret0, _ := ret[0].(Profile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProfileByPhoneNumber indicates an expected call of GetProfileByPhoneNumber.
+func (mr *MockRepositoryInterfaceMockRecorder) GetProfileByPhoneNumber(phoneNumber interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileByPhoneNumber", reflect.TypeOf((*MockRepositoryInterface)(nil).GetProfileByPhoneNumber), phoneNumber)
+}
