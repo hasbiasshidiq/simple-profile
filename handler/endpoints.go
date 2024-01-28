@@ -7,9 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 	"time"
 	"unicode"
@@ -261,17 +259,8 @@ func (s *Server) PutProfile(ctx echo.Context) error {
 
 func extractUserIDFromToken(token string) (profileID int, err error) {
 
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return profileID, errors.New("could not determine current file")
-	}
-	// Get the directory where current file reside
-	dir := filepath.Dir(filename)
-	// Get the parent directory
-	parentDir := filepath.Dir(dir)
-
 	// read public key from .key.pub file
-	pubKey, err := ioutil.ReadFile(parentDir + "/cert/jwtRS256.key.pub")
+	pubKey, err := ioutil.ReadFile("cert/jwtRS256.key.pub")
 	if err != nil {
 		log.Println("Can't open public key ", err)
 		return profileID, err
@@ -404,16 +393,8 @@ func comparePasswords(hashedPwd string, plainPwd []byte) bool {
 }
 
 func createToken(profile repository.Profile) (tokenString string, err error) {
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return tokenString, errors.New("could not determine current file")
-	}
-	// Get the directory where current file reside
-	dir := filepath.Dir(filename)
-	// Get the parent directory
-	parentDir := filepath.Dir(dir)
 
-	prvKey, err := ioutil.ReadFile(parentDir + "/cert/jwtRS256.key")
+	prvKey, err := ioutil.ReadFile("cert/jwtRS256.key")
 	if err != nil {
 		return tokenString, err
 	}

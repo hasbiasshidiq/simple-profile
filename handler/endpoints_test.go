@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/hasbiasshidiq/simple-profile/testing-init"
+
 	"github.com/golang/mock/gomock"
 	"github.com/hasbiasshidiq/simple-profile/repository"
 	"github.com/labstack/echo/v4"
