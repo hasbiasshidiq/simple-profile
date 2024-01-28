@@ -70,7 +70,7 @@ func validateStrongPassword(fl validator.FieldLevel) bool {
 
 func (s *Server) PostRegister(ctx echo.Context) error {
 
-	var profile generated.Profile
+	var request generated.RegisterRequest
 
 	customValidator := validator.New()
 	customValidator.RegisterValidation("indonesiaCountryCodePrefix", validatePhoneWithPrefix)
@@ -78,36 +78,36 @@ func (s *Server) PostRegister(ctx echo.Context) error {
 
 	ctx.Echo().Validator = &CustomValidator{validator: customValidator}
 
-	err := ctx.Bind(&profile)
+	err := ctx.Bind(&request)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, "bad request")
 	}
 
 	profileValidator := ProfileValidator{
-		FullName:    profile.FullName,
-		PhoneNumber: profile.PhoneNumber,
-		Password:    profile.Password,
+		FullName:    request.FullName,
+		PhoneNumber: request.PhoneNumber,
+		Password:    request.Password,
 	}
 	if err = ctx.Validate(profileValidator); err != nil {
-		return ctx.JSON(http.StatusBadRequest, generated.RegisterErrorResponse{Message: err.Error()})
+		return ctx.JSON(http.StatusBadRequest, generated.GeneralErrorResponse{Message: err.Error()})
 	}
 
-	countryCode := profile.PhoneNumber[:3]
-	localPhoneNumber := profile.PhoneNumber[3:]
+	countryCode := request.PhoneNumber[:3]
+	localPhoneNumber := request.PhoneNumber[3:]
 
 	isExist, err := s.Repository.GetPhoneNumberExistence(localPhoneNumber)
 	if err != nil {
 		return err
 	}
 	if isExist {
-		responsePayload := generated.RegisterErrorResponse{Message: "Phone Number Already Exist"}
+		responsePayload := generated.GeneralErrorResponse{Message: "Phone Number Already Exist"}
 		return ctx.JSON(http.StatusConflict, responsePayload)
 	}
 
-	hashedPassword := hashAndSalt([]byte(profile.Password))
+	hashedPassword := hashAndSalt([]byte(request.Password))
 
 	profileCreate := repository.Profile{
-		FullName:    profile.FullName,
+		FullName:    request.FullName,
 		CountryCode: countryCode,
 		PhoneNumber: localPhoneNumber,
 		Password:    hashedPassword,
@@ -120,6 +120,13 @@ func (s *Server) PostRegister(ctx echo.Context) error {
 	}
 
 	resp := generated.RegisterResponse{CreatedId: &createdID, Message: "Profile is successfully created"}
+
+	return ctx.JSON(http.StatusCreated, resp)
+}
+
+func (s *Server) PostLogin(ctx echo.Context) error {
+
+	resp := generated.LoginResponse{}
 
 	return ctx.JSON(http.StatusCreated, resp)
 }
