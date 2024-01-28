@@ -16,7 +16,7 @@ import (
 
 func setupTestCreateProfile(t *testing.T, requestBody string) (context echo.Context, rec *httptest.ResponseRecorder, mockRepository *repository.MockRepositoryInterface) {
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(requestBody))
+	req := httptest.NewRequest(http.MethodPost, "/profile", strings.NewReader(requestBody))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	context = e.NewContext(req, rec)
@@ -95,7 +95,7 @@ func TestCreateProfile(t *testing.T) {
 
 func setupTestLogin(t *testing.T, requestBody string) (context echo.Context, rec *httptest.ResponseRecorder, mockRepository *repository.MockRepositoryInterface) {
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(requestBody))
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(requestBody))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	context = e.NewContext(req, rec)
@@ -143,7 +143,7 @@ func TestLogin(t *testing.T) {
 		mockServer := &Server{Repository: mockRepository}
 
 		if assert.NoError(t, mockServer.PostLogin(context)) {
-			assert.Equal(t, http.StatusCreated, rec.Code)
+			assert.Equal(t, http.StatusOK, rec.Code)
 		}
 	})
 
@@ -170,6 +170,65 @@ func TestLogin(t *testing.T) {
 
 		if assert.NoError(t, mockServer.PostLogin(context)) {
 			assert.Equal(t, http.StatusBadRequest, rec.Code)
+		}
+	})
+
+}
+
+func setupTestGetProfile(t *testing.T, token string) (context echo.Context, rec *httptest.ResponseRecorder, mockRepository *repository.MockRepositoryInterface) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/profile", nil)
+
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	rec = httptest.NewRecorder()
+	context = e.NewContext(req, rec)
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockRepository = repository.NewMockRepositoryInterface(mockCtrl)
+
+	return context, rec, mockRepository
+
+}
+
+func TestGetProfile(t *testing.T) {
+
+	t.Run("Success", func(t *testing.T) {
+		profile := repository.Profile{ID: 1}
+
+		token, _ := createToken(profile)
+		context, rec, mockRepository := setupTestGetProfile(t, token)
+
+		mockRepository.EXPECT().GetProfileByID(gomock.Any()).Return(profile, nil).Times(1)
+		mockServer := &Server{Repository: mockRepository}
+
+		if assert.NoError(t, mockServer.GetProfile(context)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+		}
+	})
+	t.Run("Forbidden", func(t *testing.T) {
+
+		token := "INVALIDTOKEN"
+		context, rec, mockRepository := setupTestGetProfile(t, token)
+
+		mockServer := &Server{Repository: mockRepository}
+
+		if assert.NoError(t, mockServer.GetProfile(context)) {
+			assert.Equal(t, http.StatusForbidden, rec.Code)
+		}
+	})
+	t.Run("Profile not found", func(t *testing.T) {
+		profile := repository.Profile{}
+
+		token, _ := createToken(profile)
+		context, rec, mockRepository := setupTestGetProfile(t, token)
+
+		mockRepository.EXPECT().GetProfileByID(gomock.Any()).Return(profile, sql.ErrNoRows).Times(1)
+		mockServer := &Server{Repository: mockRepository}
+
+		if assert.NoError(t, mockServer.GetProfile(context)) {
+			assert.Equal(t, http.StatusNotFound, rec.Code)
 		}
 	})
 

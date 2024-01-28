@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -128,7 +129,114 @@ func (s *Server) PostLogin(ctx echo.Context) error {
 	}
 	resp := generated.LoginResponse{JwtToken: token, UserId: int(existingProfile.ID)}
 
-	return ctx.JSON(http.StatusCreated, resp)
+	return ctx.JSON(http.StatusOK, resp)
+}
+
+func (s *Server) GetProfile(ctx echo.Context) error {
+	// Extract the token from the Authorization header
+	token, err := extractToken(ctx)
+	if err != nil {
+		responsePayload := generated.GeneralErrorResponse{Message: "Invalid Token"}
+		return ctx.JSON(http.StatusForbidden, responsePayload)
+	}
+
+	userID, err := extractUserIDFromToken(token)
+	if err != nil {
+		responsePayload := generated.GeneralErrorResponse{Message: "Invalid Token"}
+		return ctx.JSON(http.StatusForbidden, responsePayload)
+	}
+
+	profile, err := s.Repository.GetProfileByID(userID)
+	if err != nil {
+		responsePayload := generated.GeneralErrorResponse{Message: "Profile not found"}
+		return ctx.JSON(http.StatusNotFound, responsePayload)
+	}
+
+	resp := generated.GetProfileResponse{
+		FullName:    profile.FullName,
+		PhoneNumber: profile.PhoneNumber,
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
+}
+
+func extractUserIDFromToken(token string) (profileID int, err error) {
+
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		return profileID, errors.New("could not determine current file")
+	}
+	// Get the directory where current file reside
+	dir := filepath.Dir(filename)
+	// Get the parent directory
+	parentDir := filepath.Dir(dir)
+
+	// read public key from .key.pub file
+	pubKey, err := ioutil.ReadFile(parentDir + "/cert/jwtRS256.key.pub")
+	if err != nil {
+		log.Println("Can't open public key ", err.Error())
+		return profileID, err
+	}
+
+	// validate token based on public key and extract claims
+	claims, validated := validateToken(pubKey, token)
+	if !validated {
+		return profileID, errors.New("not valid token")
+	}
+
+	// get subject
+	sub, ok := claims["sub"].(float64)
+	if !ok {
+		return profileID, errors.New("unable to extract user ID from token")
+	}
+
+	return int(sub), nil
+}
+
+func extractToken(c echo.Context) (token string, err error) {
+	// Retrieve the Authorization header from the request
+	authHeader := c.Request().Header.Get("Authorization")
+
+	// Check if the Authorization header is present
+	if authHeader == "" {
+		return token, errors.New("no authorization header found")
+	}
+
+	// Check if the Authorization header starts with "Bearer"
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		return token, errors.New("authorization header format is invalid")
+	}
+
+	// Extract the token from the Authorization header
+	token = strings.TrimPrefix(authHeader, "Bearer ")
+	return token, nil
+}
+
+func validateToken(publicKey []byte, token string) (claims jwt.MapClaims, validated bool) {
+	key, err := jwt.ParseRSAPublicKeyFromPEM(publicKey)
+	if err != nil {
+		log.Println("err validate: parse key: ", err)
+		return nil, false
+	}
+
+	tok, err := jwt.Parse(token, func(jwtToken *jwt.Token) (interface{}, error) {
+		if _, ok := jwtToken.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected method: %s", jwtToken.Header["alg"])
+		}
+		return key, nil
+	})
+	if err != nil {
+		log.Println("validation Error : ", err)
+		return nil, false
+	}
+
+	claims, ok := tok.Claims.(jwt.MapClaims)
+	if !ok || !tok.Valid {
+		log.Printf("validate: invalid")
+		return nil, false
+	}
+
+	return claims, true
 }
 
 func (cv *CustomValidator) Validate(i interface{}) error {
@@ -212,18 +320,23 @@ func createToken(profile repository.Profile) (tokenString string, err error) {
 		return tokenString, err
 	}
 
+	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM(prvKey)
+	if err != nil {
+		log.Println(err.Error())
+		return tokenString, err
+	}
+
 	// Create the token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"sub": profile.ID,
 		"exp": time.Now().Add(time.Hour * 1).Unix(),
 		"iat": time.Now().Unix(),
 	})
 
 	// Sign the token with the secret key
-	tokenString, err = token.SignedString(prvKey)
+	tokenString, err = token.SignedString(parsedKey)
 	if err != nil {
 		return tokenString, err
 	}
-
 	return tokenString, err
 }

@@ -7,5 +7,6 @@ package repository
 type RepositoryInterface interface {
 	GetPhoneNumberExistence(phoneNumber string) (isExist bool, err error)
 	GetProfileByPhoneNumber(phoneNumber string) (profile Profile, err error)
+	GetProfileByID(id int) (profile Profile, err error)
 	CreateProfile(input Profile) (createdID int, err error)
 }

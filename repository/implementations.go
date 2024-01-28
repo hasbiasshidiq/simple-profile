@@ -78,3 +78,28 @@ func (r *Repository) GetProfileByPhoneNumber(phoneNumber string) (profile Profil
 	}
 	return profile, nil
 }
+
+func (r *Repository) GetProfileByID(id int) (profile Profile, err error) {
+
+	// Fetch a single row from the database
+	row := r.Db.QueryRow(`
+		SELECT * FROM 
+			profiles 
+		WHERE 
+			id = $1 and deleted_at is null`, id)
+
+	err = row.Scan(
+		&profile.ID,
+		&profile.FullName,
+		&profile.CountryCode,
+		&profile.PhoneNumber,
+		&profile.Password,
+		&profile.CreatedAt,
+		&profile.UpdatedAt,
+		&profile.DeletedAt,
+	)
+	if err != nil {
+		return profile, err
+	}
+	return profile, nil
+}

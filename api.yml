@@ -46,6 +46,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/GeneralErrorResponse"
 
+    get:
+      summary: Get profile detail
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Get profile successful
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/GetProfileResponse"
+        '400':
+          description: Bad Request
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/GeneralErrorResponse"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              example:
+                $ref: "#/components/schemas/GeneralErrorResponse"
+
   /login:
     post:
       summary: Authenticate User
@@ -136,3 +160,17 @@ components:
         jwt_token:
           type: string
           description: JWT token with RS256 algorithm
+
+    GetProfileResponse:
+      type: object
+      required:
+        - full_name
+        - phone_number
+      properties:
+        full_name:
+          type: string
+          description: Full name of account
+        phone_number:
+          type: string
+          description: Phone Number of account
+
