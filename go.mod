@@ -7,6 +7,7 @@ require (
 	github.com/getkin/kin-openapi v0.117.0
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/golang/mock v1.6.0
+	github.com/jmoiron/sqlx v1.3.5
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.8.4

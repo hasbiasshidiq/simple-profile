@@ -70,6 +70,36 @@ paths:
               example:
                 $ref: "#/components/schemas/GeneralErrorResponse"
 
+    put:
+      summary: Update Profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        '200':
+          description: Update profile successful
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/UpdateProfileResponse"
+        '400':
+          description: Bad Request
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/GeneralErrorResponse"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              example:
+                $ref: "#/components/schemas/GeneralErrorResponse"
+
   /login:
     post:
       summary: Authenticate User
@@ -174,3 +204,28 @@ components:
           type: string
           description: Phone Number of account
 
+    UpdateProfileRequest:
+      type: object
+      properties:
+        phone_number:
+          type: string
+          minLength: 10
+          maxLength: 13
+          pattern: '^\+62\d{9,12}$'
+        full_name:
+          type: string
+          minLength: 3
+          maxLength: 60
+
+    UpdateProfileResponse:
+      type: object
+      required:
+        - full_name
+        - phone_number
+      properties:
+        full_name:
+          type: string
+          description: Full name of account
+        phone_number:
+          type: string
+          description: Phone Number of account

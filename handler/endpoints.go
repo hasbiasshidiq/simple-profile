@@ -23,10 +23,15 @@ import (
 )
 
 type (
-	ProfileValidator struct {
+	CreateProfileValidator struct {
 		FullName    string `json:"full_name" validate:"required,min=3,max=60"`
 		PhoneNumber string `json:"phone_number" validate:"required,min=10,max=13,indonesiaCountryCodePrefix"`
 		Password    string `json:"password" validate:"required,min=6,max=64,strongPassword"`
+	}
+
+	UpdateProfileValidator struct {
+		FullName    *string `json:"full_name" validate:"omitempty,min=3,max=60"`
+		PhoneNumber *string `json:"phone_number" validate:"omitempty,min=10,max=13,indonesiaCountryCodePrefix"`
 	}
 
 	CustomValidator struct {
@@ -49,12 +54,12 @@ func (s *Server) PostProfile(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	profileValidator := ProfileValidator{
+	CreateProfileValidator := CreateProfileValidator{
 		FullName:    request.FullName,
 		PhoneNumber: request.PhoneNumber,
 		Password:    request.Password,
 	}
-	if err = ctx.Validate(profileValidator); err != nil {
+	if err = ctx.Validate(CreateProfileValidator); err != nil {
 		return ctx.JSON(http.StatusBadRequest, generated.GeneralErrorResponse{Message: err.Error()})
 	}
 
@@ -112,7 +117,7 @@ func (s *Server) PostLogin(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, responsePayload)
 	}
 	if err != nil {
-		log.Println(err)
+		log.Println("error fetch profile by phone number : ", err)
 		return err
 	}
 
@@ -124,7 +129,7 @@ func (s *Server) PostLogin(ctx echo.Context) error {
 
 	token, err := createToken(existingProfile)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("error create token : ", err)
 		return err
 	}
 	resp := generated.LoginResponse{JwtToken: token, UserId: int(existingProfile.ID)}
@@ -154,7 +159,93 @@ func (s *Server) GetProfile(ctx echo.Context) error {
 
 	resp := generated.GetProfileResponse{
 		FullName:    profile.FullName,
-		PhoneNumber: profile.PhoneNumber,
+		PhoneNumber: profile.CountryCode + profile.PhoneNumber,
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
+}
+
+func (s *Server) PutProfile(ctx echo.Context) error {
+	// Extract the token from the Authorization header
+	token, err := extractToken(ctx)
+	if err != nil {
+		responsePayload := generated.GeneralErrorResponse{Message: "Invalid Token"}
+		return ctx.JSON(http.StatusForbidden, responsePayload)
+	}
+
+	userID, err := extractUserIDFromToken(token)
+	if err != nil {
+		responsePayload := generated.GeneralErrorResponse{Message: "Invalid Token"}
+		return ctx.JSON(http.StatusForbidden, responsePayload)
+	}
+
+	var request generated.UpdateProfileRequest
+
+	customValidator := validator.New()
+	customValidator.RegisterValidation("indonesiaCountryCodePrefix", validatePhoneWithPrefix)
+	customValidator.RegisterValidation("strongPassword", validateStrongPassword)
+
+	ctx.Echo().Validator = &CustomValidator{validator: customValidator}
+
+	err = ctx.Bind(&request)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	if request.FullName == nil && request.PhoneNumber == nil {
+		responsePayload := generated.GeneralErrorResponse{Message: "full_name or phone_number should be filled"}
+		return ctx.JSON(http.StatusBadRequest, responsePayload)
+	}
+	updateProfileValidator := UpdateProfileValidator{}
+	if request.FullName != nil {
+		updateProfileValidator.FullName = request.FullName
+	}
+	if request.PhoneNumber != nil {
+		updateProfileValidator.PhoneNumber = request.PhoneNumber
+	}
+
+	if err = ctx.Validate(updateProfileValidator); err != nil {
+		return ctx.JSON(http.StatusBadRequest, generated.GeneralErrorResponse{Message: err.Error()})
+	}
+
+	if request.PhoneNumber != nil {
+		localPhoneNumber := (*request.PhoneNumber)[3:]
+
+		isExist, err := s.Repository.GetPhoneNumberExistenceWithExcludedID(localPhoneNumber, userID)
+		if err != nil {
+			return err
+		}
+		if isExist {
+			responsePayload := generated.GeneralErrorResponse{Message: "Phone Number Already Exist"}
+			return ctx.JSON(http.StatusConflict, responsePayload)
+		}
+	}
+
+	profile := repository.Profile{ID: uint64(userID)}
+	if request.PhoneNumber != nil {
+		localPhoneNumber := (*request.PhoneNumber)[3:]
+		profile.PhoneNumber = localPhoneNumber
+	}
+	if request.FullName != nil {
+		profile.FullName = *request.FullName
+	}
+
+	err = s.Repository.UpdateProfileByID(profile)
+
+	if err != nil {
+		responsePayload := generated.GeneralErrorResponse{Message: "Can't update profile"}
+		return ctx.JSON(http.StatusConflict, responsePayload)
+	}
+
+	profile, err = s.Repository.GetProfileByID(userID)
+	if err != nil {
+		responsePayload := generated.GeneralErrorResponse{Message: "Profile not found"}
+		return ctx.JSON(http.StatusNotFound, responsePayload)
+	}
+
+	resp := generated.UpdateProfileResponse{
+		FullName:    profile.FullName,
+		PhoneNumber: profile.CountryCode + profile.PhoneNumber,
 	}
 
 	return ctx.JSON(http.StatusOK, resp)
@@ -174,7 +265,7 @@ func extractUserIDFromToken(token string) (profileID int, err error) {
 	// read public key from .key.pub file
 	pubKey, err := ioutil.ReadFile(parentDir + "/cert/jwtRS256.key.pub")
 	if err != nil {
-		log.Println("Can't open public key ", err.Error())
+		log.Println("Can't open public key ", err)
 		return profileID, err
 	}
 
@@ -226,13 +317,13 @@ func validateToken(publicKey []byte, token string) (claims jwt.MapClaims, valida
 		return key, nil
 	})
 	if err != nil {
-		log.Println("validation Error : ", err)
+		log.Println("token validation error : ", err)
 		return nil, false
 	}
 
 	claims, ok := tok.Claims.(jwt.MapClaims)
 	if !ok || !tok.Valid {
-		log.Printf("validate: invalid")
+		log.Printf("token validation error, can't create map of claims")
 		return nil, false
 	}
 
@@ -286,7 +377,7 @@ func hashAndSalt(pwd []byte) string {
 
 	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
 	if err != nil {
-		log.Println(err)
+		log.Println("can't generate hash : ", err)
 	}
 	return string(hash)
 }
@@ -297,7 +388,7 @@ func comparePasswords(hashedPwd string, plainPwd []byte) bool {
 	byteHash := []byte(hashedPwd)
 	err := bcrypt.CompareHashAndPassword(byteHash, plainPwd)
 	if err != nil {
-		log.Println(err)
+		log.Println("error on comparing password and hashed password : ", err)
 		return false
 	}
 
@@ -316,13 +407,11 @@ func createToken(profile repository.Profile) (tokenString string, err error) {
 
 	prvKey, err := ioutil.ReadFile(parentDir + "/cert/jwtRS256.key")
 	if err != nil {
-		log.Println(err.Error())
 		return tokenString, err
 	}
 
 	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM(prvKey)
 	if err != nil {
-		log.Println(err.Error())
 		return tokenString, err
 	}
 

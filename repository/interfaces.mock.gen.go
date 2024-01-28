@@ -63,6 +63,21 @@ func (mr *MockRepositoryInterfaceMockRecorder) GetPhoneNumberExistence(phoneNumb
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPhoneNumberExistence", reflect.TypeOf((*MockRepositoryInterface)(nil).GetPhoneNumberExistence), phoneNumber)
 }
 
+// GetPhoneNumberExistenceWithExcludedID mocks base method.
+func (m *MockRepositoryInterface) GetPhoneNumberExistenceWithExcludedID(phoneNumber string, excludedID int) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPhoneNumberExistenceWithExcludedID", phoneNumber, excludedID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPhoneNumberExistenceWithExcludedID indicates an expected call of GetPhoneNumberExistenceWithExcludedID.
+func (mr *MockRepositoryInterfaceMockRecorder) GetPhoneNumberExistenceWithExcludedID(phoneNumber, excludedID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPhoneNumberExistenceWithExcludedID", reflect.TypeOf((*MockRepositoryInterface)(nil).GetPhoneNumberExistenceWithExcludedID), phoneNumber, excludedID)
+}
+
 // GetProfileByID mocks base method.
 func (m *MockRepositoryInterface) GetProfileByID(id int) (Profile, error) {
 	m.ctrl.T.Helper()
@@ -91,4 +106,18 @@ func (m *MockRepositoryInterface) GetProfileByPhoneNumber(phoneNumber string) (P
 func (mr *MockRepositoryInterfaceMockRecorder) GetProfileByPhoneNumber(phoneNumber interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileByPhoneNumber", reflect.TypeOf((*MockRepositoryInterface)(nil).GetProfileByPhoneNumber), phoneNumber)
+}
+
+// UpdateProfileByID mocks base method.
+func (m *MockRepositoryInterface) UpdateProfileByID(profile Profile) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateProfileByID", profile)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateProfileByID indicates an expected call of UpdateProfileByID.
+func (mr *MockRepositoryInterfaceMockRecorder) UpdateProfileByID(profile interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProfileByID", reflect.TypeOf((*MockRepositoryInterface)(nil).UpdateProfileByID), profile)
 }
